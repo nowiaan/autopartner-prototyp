@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asystent Ofertowania B2B · AutoPartner Max — Prototyp pilota</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --navy:#0B2E5E;
+  --navy-d:#072042;
+  --blue:#1E5AA8;
+  --orange:#E8692E;
+  --orange-d:#C8541F;
+  --green:#18745D;
+  --green-l:#E0F1EA;
+  --yellow:#B5841C;
+  --yellow-l:#FAF1D8;
+  --red:#C03A2C;
+  --red-l:#FBE3E0;
+  --text:#172033;
+  --muted:#64748B;
+  --line:#E3E7ED;
+  --bg:#F4F6FA;
+  --card:#FFFFFF;
+  --bg-blue:#EAF1FF;
+  --bg-orange:#FFF1E8;
+}
+html,body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,-apple-system,sans-serif;-webkit-font-smoothing:antialiased;font-size:14px;line-height:1.4;}
+body{min-height:100vh;display:flex;flex-direction:column;}
+
+/* ============ TOP BAR ============ */
+.topbar{background:var(--navy);color:#fff;padding:0 24px;height:60px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 1px 0 rgba(0,0,0,.06);position:sticky;top:0;z-index:10;}
+.brand{display:flex;align-items:center;gap:12px;}
+.brand-mark{width:32px;height:32px;background:var(--orange);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:14px;letter-spacing:-0.02em;}
+.brand-name{font-weight:700;letter-spacing:-0.01em;font-size:15px;}
+.brand-name .sub{color:#A5BAD6;font-weight:500;margin-left:6px;}
+.pilot-badge{font-size:11px;font-weight:700;letter-spacing:0.15em;padding:5px 11px;border:1px solid #2A4566;border-radius:999px;color:#C5D4E8;background:rgba(255,255,255,0.03);}
+.pilot-badge .dot{display:inline-block;width:6px;height:6px;background:var(--orange);border-radius:50%;margin-right:7px;vertical-align:middle;}
+.user{display:flex;align-items:center;gap:10px;}
+.user .avatar{width:34px;height:34px;background:#1E5AA8;color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;letter-spacing:0.05em;}
+.user .meta{text-align:right;font-size:12px;line-height:1.3;}
+.user .name{font-weight:600;color:#fff;}
+.user .role{color:#A5BAD6;font-size:11px;}
+
+/* ============ LAYOUT ============ */
+.layout{display:grid;grid-template-columns:280px 1fr;flex:1;min-height:0;}
+
+/* ============ SIDEBAR ============ */
+.sidebar{background:#fff;border-right:1px solid var(--line);padding:18px 0;overflow-y:auto;}
+.sidebar h3{font-size:11px;font-weight:700;letter-spacing:0.16em;color:var(--muted);text-transform:uppercase;padding:0 20px;margin-bottom:10px;}
+.inq{padding:12px 20px;border-left:3px solid transparent;cursor:default;}
+.inq.active{background:var(--bg-blue);border-left-color:var(--blue);}
+.inq .top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px;}
+.inq .name{font-weight:600;font-size:13px;color:var(--text);}
+.inq.active .name{color:var(--navy);}
+.inq .time{font-size:11px;color:var(--muted);}
+.inq .preview{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.inq .status{display:inline-block;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:2px 7px;border-radius:4px;margin-top:5px;}
+.inq .status.new{background:var(--bg-orange);color:var(--orange-d);}
+.inq .status.draft{background:#F0E8F8;color:#7B3FB8;}
+.inq .status.sent{background:var(--green-l);color:var(--green);}
+
+.sidebar-sep{border-top:1px solid var(--line);margin:14px 0;}
+
+/* ============ WORKSPACE ============ */
+.workspace{padding:20px 28px 32px;overflow-y:auto;max-width:1100px;width:100%;}
+
+/* Stepper */
+.stepper{display:flex;align-items:center;gap:0;background:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin-bottom:18px;}
+.step{display:flex;align-items:center;gap:10px;flex:1;color:var(--muted);font-size:12px;font-weight:500;}
+.step .num{width:24px;height:24px;border-radius:50%;background:#F0F2F6;color:var(--muted);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0;}
+.step.done .num{background:var(--green);color:#fff;}
+.step.done .num::before{content:"✓";}
+.step.done .num .n{display:none;}
+.step.active .num{background:var(--orange);color:#fff;}
+.step.active{color:var(--text);font-weight:600;}
+.step .arrow{margin:0 8px;color:#D8DEE9;font-weight:400;}
+
+/* Screen container */
+.screen{display:none;animation:fadeIn 0.3s ease-out;}
+.screen.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:translateY(0);}}
+
+/* Headers within screens */
+.screen-head{margin-bottom:18px;}
+.screen-head h1{font-size:22px;font-weight:700;color:var(--navy);letter-spacing:-0.01em;line-height:1.2;}
+.screen-head .sub{font-size:13px;color:var(--muted);margin-top:5px;}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px 22px;}
+.card-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--line);}
+.card-header h2{font-size:15px;font-weight:700;color:var(--navy);letter-spacing:-0.005em;}
+.card-header .meta{font-size:12px;color:var(--muted);}
+
+/* AI label */
+.ai-badge{display:inline-flex;align-items:center;gap:5px;background:linear-gradient(135deg,#1E5AA8,#0B2E5E);color:#fff;font-size:10px;font-weight:700;letter-spacing:0.14em;padding:3px 8px;border-radius:4px;text-transform:uppercase;}
+.ai-badge::before{content:"";width:5px;height:5px;background:#E8692E;border-radius:50%;}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 20px;font-size:13px;font-weight:600;border-radius:8px;cursor:pointer;border:none;transition:all .15s ease;font-family:inherit;}
+.btn-primary{background:var(--orange);color:#fff;}
+.btn-primary:hover{background:var(--orange-d);}
+.btn-secondary{background:#fff;color:var(--navy);border:1px solid var(--line);}
+.btn-secondary:hover{border-color:var(--navy);}
+.btn-text{background:transparent;color:var(--muted);padding:11px 12px;}
+.btn-text:hover{color:var(--navy);}
+.btn-lg{padding:13px 26px;font-size:14px;}
+.btn-icon{font-size:14px;}
+
+/* Actions bar */
+.actions{display:flex;justify-content:space-between;align-items:center;margin-top:20px;}
+.actions .left, .actions .right{display:flex;gap:10px;}
+
+/* ============ SCREEN 1: INBOX ============ */
+.email-view{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+.email-head{padding:18px 22px;border-bottom:1px solid var(--line);background:#FAFBFC;}
+.email-from{display:flex;align-items:center;gap:12px;margin-bottom:12px;}
+.email-from .avatar{width:40px;height:40px;background:#FFF1E8;color:var(--orange-d);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;}
+.email-from .info{flex:1;}
+.email-from .name{font-weight:600;color:var(--text);font-size:14px;}
+.email-from .addr{font-size:12px;color:var(--muted);}
+.email-from .time{font-size:11px;color:var(--muted);text-align:right;}
+.email-subj{font-size:16px;font-weight:600;color:var(--navy);}
+.email-tags{display:flex;gap:6px;margin-top:8px;}
+.tag{font-size:10px;font-weight:600;letter-spacing:0.06em;padding:3px 8px;border-radius:4px;background:#F0F2F6;color:var(--muted);text-transform:uppercase;}
+.tag.urgent{background:var(--red-l);color:var(--red);}
+.tag.b2b{background:var(--bg-blue);color:var(--blue);}
+.email-body{padding:22px;font-size:14px;line-height:1.55;color:var(--text);}
+.email-body p{margin-bottom:14px;}
+.email-body .sig{margin-top:18px;padding-top:18px;border-top:1px solid var(--line);font-size:12px;color:var(--muted);}
+
+.cta-bar{margin-top:16px;background:linear-gradient(135deg,#FFFAF5 0%,#FFF1E8 100%);border:1px solid #F4D2B5;border-radius:10px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center;}
+.cta-bar .text{font-size:13px;color:var(--text);}
+.cta-bar .text strong{color:var(--navy);}
+
+/* ============ SCREEN 2: AI ANALYSIS ============ */
+.split{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.col h3{font-size:11px;font-weight:700;letter-spacing:0.16em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.email-condensed{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;font-size:13px;color:var(--text);line-height:1.5;height:100%;}
+.email-condensed .from-mini{font-size:12px;color:var(--muted);margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid var(--line);}
+.email-condensed .from-mini b{color:var(--navy);font-weight:600;}
+
+.parsed{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+.parsed-row{display:grid;grid-template-columns:130px 1fr;gap:10px;padding:8px 0;border-bottom:1px solid #F0F2F6;font-size:13px;}
+.parsed-row:last-child{border-bottom:none;}
+.parsed-row .label{color:var(--muted);font-size:12px;font-weight:500;}
+.parsed-row .value{color:var(--text);font-weight:500;}
+.parsed-row .value.missing{color:var(--yellow);background:var(--yellow-l);padding:2px 8px;border-radius:4px;display:inline-block;font-size:12px;}
+.parsed-row .conf{font-size:11px;color:var(--muted);margin-left:8px;}
+.conf-high{color:var(--green);}
+.conf-mid{color:var(--yellow);}
+
+.ai-note{background:#F0F5FB;border-left:3px solid var(--blue);padding:12px 16px;border-radius:0 8px 8px 0;margin-top:14px;font-size:13px;color:var(--text);}
+.ai-note .badge-mini{font-size:10px;font-weight:700;letter-spacing:0.12em;color:var(--blue);text-transform:uppercase;display:block;margin-bottom:4px;}
+
+/* ============ SCREEN 3: PRODUCT RECOMMENDATIONS ============ */
+.context-bar{background:#fff;border:1px solid var(--line);border-radius:10px;padding:13px 18px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.context-bar .left{display:flex;align-items:center;gap:12px;font-size:13px;}
+.context-bar .item{color:var(--muted);}
+.context-bar .item b{color:var(--text);font-weight:600;}
+.context-bar .sep{color:#D8DEE9;}
+
+.products{display:flex;flex-direction:column;gap:10px;}
+.product{background:#fff;border:1.5px solid var(--line);border-radius:10px;padding:14px 16px 14px 18px;cursor:pointer;transition:all .15s ease;position:relative;display:grid;grid-template-columns:24px 1fr 130px 150px;gap:14px;align-items:center;}
+.product:hover{border-color:#C5D0E0;}
+.product.selected{border-color:var(--blue);background:linear-gradient(to right,#F3F8FF,#fff);box-shadow:0 0 0 3px rgba(30,90,168,0.08);}
+.product.recommended::before{content:"REKOMENDACJA AI";position:absolute;top:-9px;left:16px;background:var(--navy);color:#fff;font-size:9px;font-weight:700;letter-spacing:0.15em;padding:3px 8px;border-radius:4px;}
+
+.product .radio{width:18px;height:18px;border:2px solid var(--line);border-radius:50%;flex-shrink:0;position:relative;}
+.product.selected .radio{border-color:var(--blue);}
+.product.selected .radio::after{content:"";position:absolute;inset:3px;background:var(--blue);border-radius:50%;}
+
+.product .info .name{font-weight:600;color:var(--navy);font-size:14px;margin-bottom:3px;}
+.product .info .code{font-size:11px;color:var(--muted);font-family:'JetBrains Mono','SF Mono',monospace;}
+.product .info .meta{font-size:12px;color:var(--muted);margin-top:5px;}
+.product .info .meta .oem-pill{display:inline-block;background:var(--bg-blue);color:var(--blue);font-size:10px;font-weight:700;letter-spacing:0.06em;padding:1px 6px;border-radius:3px;margin-right:5px;}
+.product .info .ai-comment{font-size:12px;color:var(--blue);margin-top:6px;font-style:italic;}
+
+.product .price{text-align:right;}
+.product .price .amount{font-size:18px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;}
+.product .price .label{font-size:11px;color:var(--muted);}
+
+.product .signals{display:flex;flex-direction:column;gap:5px;align-items:flex-end;}
+.margin-pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 9px;border-radius:999px;letter-spacing:0.02em;}
+.margin-pill.green{background:var(--green-l);color:var(--green);}
+.margin-pill.yellow{background:var(--yellow-l);color:var(--yellow);}
+.margin-pill.red{background:var(--red-l);color:var(--red);}
+.margin-pill::before{content:"";width:7px;height:7px;border-radius:50%;}
+.margin-pill.green::before{background:var(--green);}
+.margin-pill.yellow::before{background:var(--yellow);}
+.margin-pill.red::before{background:var(--red);}
+.avail{font-size:11px;color:var(--muted);}
+.avail.in-stock{color:var(--green);}
+.avail.delay{color:var(--yellow);}
+.avail.out{color:var(--red);}
+
+.margin-legend{background:#FAFBFC;border:1px dashed var(--line);border-radius:8px;padding:10px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:14px;font-size:12px;color:var(--muted);}
+.margin-legend .items{display:flex;gap:14px;}
+.margin-legend .items span{display:flex;align-items:center;gap:6px;}
+.margin-legend .items b{color:var(--text);font-weight:500;}
+.margin-legend .note{font-size:11px;color:var(--muted);font-style:italic;}
+
+.summary{background:linear-gradient(to right,#F3F8FF,#FAFCFE);border:1px solid #C5D0E0;border-radius:10px;padding:14px 18px;margin-top:14px;display:flex;justify-content:space-between;align-items:center;}
+.summary .left{font-size:13px;}
+.summary .left .label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:0.14em;text-transform:uppercase;margin-bottom:3px;}
+.summary .left .selected-name{font-weight:600;color:var(--navy);font-size:14px;}
+.summary .left .selected-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* ============ SCREEN 4: DRAFT ============ */
+.draft-layout{display:grid;grid-template-columns:1fr 280px;gap:16px;}
+
+.draft-card{background:#fff;border:1px solid var(--line);border-radius:12px;overflow:hidden;}
+.draft-head{padding:14px 18px;border-bottom:1px solid var(--line);background:#FAFBFC;display:flex;justify-content:space-between;align-items:center;}
+.draft-head .title{font-size:13px;font-weight:600;color:var(--navy);display:flex;align-items:center;gap:8px;}
+.draft-head .meta{font-size:11px;color:var(--muted);}
+.draft-fields{padding:14px 18px;border-bottom:1px solid var(--line);}
+.field{display:grid;grid-template-columns:80px 1fr;gap:10px;padding:5px 0;font-size:13px;align-items:baseline;}
+.field .lbl{color:var(--muted);font-size:12px;}
+.field .val{color:var(--text);}
+.field .val.email{color:var(--blue);}
+
+.draft-body{padding:18px;}
+.draft-body textarea{width:100%;min-height:280px;border:1px solid var(--line);border-radius:8px;padding:14px 16px;font-size:13px;line-height:1.6;font-family:inherit;color:var(--text);resize:vertical;}
+.draft-body textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(30,90,168,0.08);}
+
+.draft-side{display:flex;flex-direction:column;gap:12px;}
+.side-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px;}
+.side-card h4{font-size:11px;font-weight:700;letter-spacing:0.14em;color:var(--muted);text-transform:uppercase;margin-bottom:10px;}
+.side-card .product-summary .name{font-size:13px;font-weight:600;color:var(--navy);}
+.side-card .product-summary .price{font-size:18px;font-weight:700;color:var(--navy);margin-top:4px;}
+.side-card .product-summary .meta{font-size:12px;color:var(--muted);margin-top:4px;}
+.side-card .margin-pill{margin-top:8px;}
+
+.crossell{background:#FFF8F0;border:1px solid #F4D2B5;border-radius:8px;padding:11px 14px;font-size:12px;}
+.crossell .title{font-weight:600;color:var(--orange-d);font-size:11px;letter-spacing:0.06em;text-transform:uppercase;margin-bottom:5px;}
+.crossell .item{color:var(--text);}
+.crossell .item b{color:var(--navy);}
+
+/* ============ SCREEN 5: CONFIRMATION ============ */
+.confirm{text-align:center;padding:24px 0 16px;}
+.check{width:70px;height:70px;background:var(--green-l);border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:34px;color:var(--green);margin-bottom:14px;}
+.confirm h1{font-size:26px;font-weight:700;color:var(--navy);letter-spacing:-0.01em;}
+.confirm .desc{color:var(--muted);font-size:14px;margin-top:8px;}
+
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:24px;}
+.metric{background:#fff;border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+.metric .label{font-size:11px;font-weight:700;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase;margin-bottom:8px;}
+.metric .value{font-size:24px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums;letter-spacing:-0.02em;}
+.metric .value.green{color:var(--green);}
+.metric .delta{font-size:11px;color:var(--muted);margin-top:3px;}
+.metric .delta.up{color:var(--green);}
+.metric .delta.down{color:var(--red);}
+
+.pilot-context{background:linear-gradient(135deg,#0B2E5E,#1E5AA8);color:#fff;border-radius:12px;padding:20px 24px;margin-top:20px;display:flex;justify-content:space-between;align-items:center;}
+.pilot-context .left .label{font-size:11px;font-weight:700;letter-spacing:0.14em;color:#A5BAD6;text-transform:uppercase;margin-bottom:5px;}
+.pilot-context .left .text{font-size:14px;line-height:1.5;max-width:540px;}
+.pilot-context .left .text b{color:#fff;}
+.pilot-context .right{display:flex;gap:18px;}
+.pilot-context .stat{text-align:right;}
+.pilot-context .stat .v{font-size:22px;font-weight:700;}
+.pilot-context .stat .l{font-size:10px;color:#A5BAD6;letter-spacing:0.1em;text-transform:uppercase;font-weight:600;margin-top:3px;}
+
+/* ============ AI THINKING OVERLAY ============ */
+.thinking{position:fixed;inset:0;background:rgba(7,32,66,0.5);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:50;opacity:0;transition:opacity .25s;}
+.thinking.show{display:flex;opacity:1;}
+.thinking-box{background:#fff;border-radius:14px;padding:28px 38px;display:flex;align-items:center;gap:18px;box-shadow:0 20px 50px rgba(7,32,66,.3);min-width:340px;}
+.thinking-dots{display:flex;gap:5px;}
+.thinking-dots span{width:8px;height:8px;background:var(--orange);border-radius:50%;animation:bounce 1.2s ease-in-out infinite;}
+.thinking-dots span:nth-child(2){animation-delay:.15s;}
+.thinking-dots span:nth-child(3){animation-delay:.3s;}
+@keyframes bounce{0%,80%,100%{transform:translateY(0);opacity:.4;}40%{transform:translateY(-7px);opacity:1;}}
+.thinking-text{font-size:14px;color:var(--navy);font-weight:500;}
+.thinking-text .sub{font-size:12px;color:var(--muted);font-weight:400;margin-top:2px;}
+
+/* ============ FOOTER NOTE ============ */
+.footnote{text-align:center;padding:14px 20px;font-size:11px;color:var(--muted);border-top:1px solid var(--line);background:#fff;letter-spacing:0.02em;}
+.footnote b{color:var(--navy);font-weight:600;}
+
+/* ============ MISC ============ */
+.kpi-inline{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-left:14px;}
+.kpi-inline .marker{width:6px;height:6px;border-radius:50%;background:var(--green);}
+
+@media (max-width:1100px){
+  .layout{grid-template-columns:240px 1fr;}
+  .metrics{grid-template-columns:repeat(2,1fr);}
+  .draft-layout{grid-template-columns:1fr;}
+  .pilot-context{flex-direction:column;align-items:flex-start;gap:14px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ TOP BAR ============ -->
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">A</div>
+    <div class="brand-name">AutoPartner Max <span class="sub">· Asystent Ofertowania</span></div>
+  </div>
+  <div class="pilot-badge"><span class="dot"></span>PILOT · 12/40 HANDLOWCÓW</div>
+  <div class="user">
+    <div class="meta">
+      <div class="name">Tomasz Kowalski</div>
+      <div class="role">Senior Handlowiec B2B · Kraków</div>
+    </div>
+    <div class="avatar">TK</div>
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- ============ SIDEBAR ============ -->
+  <aside class="sidebar">
+    <h3>Zapytania · dziś</h3>
+    <div class="inq active">
+      <div class="top"><span class="name">Marek Wójcik</span><span class="time">09:42</span></div>
+      <div class="preview">Pompa paliwa Ford Focus 2015</div>
+      <span class="status new">Nowe</span>
+    </div>
+    <div class="inq">
+      <div class="top"><span class="name">AutoFix Sp. z o.o.</span><span class="time">09:15</span></div>
+      <div class="preview">Klocki hamulcowe Audi A4 — 4 kpl</div>
+      <span class="status draft">Draft</span>
+    </div>
+    <div class="inq">
+      <div class="top"><span class="name">Warsztat Premium</span><span class="time">08:51</span></div>
+      <div class="preview">Filtry oleju — zamówienie cykliczne</div>
+      <span class="status sent">Wysłane</span>
+    </div>
+    <div class="inq">
+      <div class="top"><span class="name">Mechanik24</span><span class="time">08:30</span></div>
+      <div class="preview">Pompa wodna Skoda Octavia 1.9 TDI</div>
+      <span class="status sent">Wysłane</span>
+    </div>
+    <div class="sidebar-sep"></div>
+    <h3>Zapytania · wczoraj</h3>
+    <div class="inq">
+      <div class="top"><span class="name">CarService Plus</span><span class="time">16:42</span></div>
+      <div class="preview">Amortyzatory tył VW Golf VII</div>
+      <span class="status sent">Wysłane</span>
+    </div>
+    <div class="inq">
+      <div class="top"><span class="name">Warsztat Marka</span><span class="time">14:20</span></div>
+      <div class="preview">Sprzęgło BMW E90 320d</div>
+      <span class="status sent">Wysłane</span>
+    </div>
+  </aside>
+
+  <!-- ============ WORKSPACE ============ -->
+  <main class="workspace">
+
+    <!-- Stepper -->
+    <div class="stepper" id="stepper">
+      <div class="step active" data-step="1"><div class="num"><span class="n">1</span></div>Zapytanie</div>
+      <div class="arrow">→</div>
+      <div class="step" data-step="2"><div class="num"><span class="n">2</span></div>Analiza AI</div>
+      <div class="arrow">→</div>
+      <div class="step" data-step="3"><div class="num"><span class="n">3</span></div>Rekomendacja produktu</div>
+      <div class="arrow">→</div>
+      <div class="step" data-step="4"><div class="num"><span class="n">4</span></div>Oferta</div>
+      <div class="arrow">→</div>
+      <div class="step" data-step="5"><div class="num"><span class="n">5</span></div>Wysłane</div>
+    </div>
+
+    <!-- ============ SCREEN 1: INBOX ============ -->
+    <div class="screen active" id="screen-1">
+      <div class="screen-head">
+        <h1>Zapytanie ofertowe</h1>
+        <div class="sub">Klient B2B · Warsztat Marek Wójcik · pierwszy kontakt o 09:42</div>
+      </div>
+
+      <div class="email-view">
+        <div class="email-head">
+          <div class="email-from">
+            <div class="avatar">MW</div>
+            <div class="info">
+              <div class="name">Marek Wójcik</div>
+              <div class="addr">marek.wojcik@warsztat-wojcik.pl</div>
+            </div>
+            <div class="time">Dziś, 09:42<br>Kraków</div>
+          </div>
+          <div class="email-subj">Zapytanie — pompa paliwa Ford Focus</div>
+          <div class="email-tags">
+            <span class="tag b2b">B2B</span>
+            <span class="tag">Warsztat</span>
+            <span class="tag urgent">Pilne</span>
+          </div>
+        </div>
+        <div class="email-body">
+          <p>Dzień dobry,</p>
+          <p>Potrzebuję pilnie pompy paliwa do Forda Focusa rocznik 2015, silnik 1.6 diesel. Mam auto na podnośniku, klient czeka na odbiór jutro rano.</p>
+          <p>Proszę o informację o cenie, dostępności i czy macie też zamiennik tańszy w przyzwoitej jakości — klient pyta o opcje. Chciałbym dostać odpowiedź w miarę szybko, bo jak się nie wyrobicie, to muszę szukać gdzie indziej.</p>
+          <p>Dzięki,<br>Marek</p>
+          <div class="sig">
+            Marek Wójcik · Warsztat Samochodowy Marek Wójcik<br>
+            ul. Wadowicka 14, 30-415 Kraków · NIP 6790000000
+          </div>
+        </div>
+      </div>
+
+      <div class="cta-bar">
+        <div class="text"><strong>Asystent AI</strong> może przygotować pierwszą wersję odpowiedzi w oparciu o walidowany katalog. Decyzję końcową podejmujesz Ty.</div>
+        <button class="btn btn-primary btn-lg" onclick="goTo(2)">
+          <span class="btn-icon">⚡</span> Przygotuj odpowiedź z AI
+        </button>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN 2: AI ANALYSIS ============ -->
+    <div class="screen" id="screen-2">
+      <div class="screen-head">
+        <h1>Analiza zapytania <span class="ai-badge">AI</span></h1>
+        <div class="sub">Asystent wyodrębnił kluczowe informacje z wiadomości i oznaczył dane brakujące do weryfikacji.</div>
+      </div>
+
+      <div class="split">
+        <div class="col">
+          <h3>Treść oryginalna</h3>
+          <div class="email-condensed">
+            <div class="from-mini"><b>Marek Wójcik</b> · marek.wojcik@warsztat-wojcik.pl · 09:42</div>
+            <p>Potrzebuję pilnie <b>pompy paliwa</b> do <b>Forda Focusa rocznik 2015, silnik 1.6 diesel</b>. Mam auto na podnośniku, klient czeka na odbiór jutro rano.</p>
+            <p style="margin-top:10px;">Proszę o informację o <b>cenie, dostępności</b> i czy macie też <b>zamiennik tańszy w przyzwoitej jakości</b>.</p>
+          </div>
+        </div>
+
+        <div class="col">
+          <h3><span class="ai-badge">AI</span> Dane wyodrębnione</h3>
+          <div class="parsed">
+            <div class="parsed-row">
+              <span class="label">Klient</span>
+              <span class="value">Warsztat Marek Wójcik <span class="conf conf-high">✓ Klient B2B w CRM</span></span>
+            </div>
+            <div class="parsed-row">
+              <span class="label">Marka pojazdu</span>
+              <span class="value">Ford <span class="conf conf-high">✓ pewność: wysoka</span></span>
+            </div>
+            <div class="parsed-row">
+              <span class="label">Model</span>
+              <span class="value">Focus <span class="conf conf-high">✓ pewność: wysoka</span></span>
+            </div>
+            <div class="parsed-row">
+              <span class="label">Rocznik</span>
+              <span class="value">2015 <span class="conf conf-mid">~ szacunek: III generacja Mk3</span></span>
+            </div>
+            <div class="parsed-row">
+              <span class="label">Silnik</span>
+              <span class="value">1.6 TDCi (diesel) <span class="conf conf-mid">~ pewność: średnia</span></span>
+            </div>
+            <div class="parsed-row">
+              <span class="label">Część szukana</span>
+              <span class="value">Pompa paliwa <span class="conf conf-high">✓ kategoria walidowana</span></span>
+            </div>
+            <div class="parsed-row">
+              <span class="label">Ilość</span>
+              <span class="value">1 szt.</span>
+            </div>
+            <div class="parsed-row">
+              <span class="label">Pilność</span>
+              <span class="value">Wysoka — odbiór klienta jutro rano</span>
+            </div>
+            <div class="parsed-row">
+              <span class="label">Oczekiwania</span>
+              <span class="value">Cena, dostępność, opcja zamiennika</span>
+            </div>
+            <div class="parsed-row">
+              <span class="label">Dane brakujące</span>
+              <span class="value missing">VIN · dokładny kod silnika</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="ai-note">
+        <span class="badge-mini">Komentarz asystenta</span>
+        Bez VIN i pełnego kodu silnika rekomendacja produktu opiera się na najczęstszej konfiguracji Forda Focusa Mk3 z silnikiem 1.6 TDCi (kod silnika T1DA / T1DB). W kolejnym kroku oznaczę rekomendacje wymagające potwierdzenia.
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-text" onclick="goTo(1)">← Wróć do zapytania</button>
+        <div class="right">
+          <button class="btn btn-secondary">Dopytaj klienta</button>
+          <button class="btn btn-primary" onclick="goTo(3)">Pokaż rekomendacje produktów →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN 3: PRODUCT RECOMMENDATIONS ============ -->
+    <div class="screen" id="screen-3">
+      <div class="screen-head">
+        <h1>Rekomendowane produkty <span class="ai-badge">AI</span></h1>
+        <div class="sub">Cztery opcje z walidowanej kategorii „Pompy paliwa". Wskaźnik marży działa w trybie informacyjnym — decyzję o cenie podejmujesz Ty.</div>
+      </div>
+
+      <div class="context-bar">
+        <div class="left">
+          <span class="item">Kategoria: <b>Pompy paliwa</b></span>
+          <span class="sep">·</span>
+          <span class="item"><b>Ford Focus Mk3</b></span>
+          <span class="sep">·</span>
+          <span class="item"><b>1.6 TDCi (2011–2018)</b></span>
+          <span class="sep">·</span>
+          <span class="item">Próg marży: <b>20%</b></span>
+        </div>
+        <div class="kpi-inline"><span class="marker"></span>Wskaźnik marży aktywny</div>
+      </div>
+
+      <div class="products" id="products">
+
+        <div class="product" data-id="1" onclick="selectProduct(1)">
+          <div class="radio"></div>
+          <div class="info">
+            <div class="name">Pompa paliwa Ford OEM oryginalna</div>
+            <div class="code">6C46-9H307-AA · indeks AP 1234567</div>
+            <div class="meta"><span class="oem-pill">OEM</span> Część oryginalna producenta</div>
+          </div>
+          <div class="price">
+            <div class="amount">850 zł</div>
+            <div class="label">netto · 1 szt.</div>
+          </div>
+          <div class="signals">
+            <span class="margin-pill green">Marża powyżej progu</span>
+            <span class="avail in-stock">Magazyn Kraków · 4 szt.</span>
+          </div>
+        </div>
+
+        <div class="product recommended selected" data-id="2" onclick="selectProduct(2)">
+          <div class="radio"></div>
+          <div class="info">
+            <div class="name">Bosch 0 580 464 038</div>
+            <div class="code">Bosch 0580464038 · indeks AP 2245189</div>
+            <div class="meta"><span class="oem-pill">ZAMIENNIK 1</span> Pełna zgodność OEM · gwarancja 24 mies.</div>
+            <div class="ai-comment">AI: dobry stosunek cena/marża; znana marka, niskie ryzyko reklamacji</div>
+          </div>
+          <div class="price">
+            <div class="amount">420 zł</div>
+            <div class="label">netto · 1 szt.</div>
+          </div>
+          <div class="signals">
+            <span class="margin-pill green">Marża powyżej progu</span>
+            <span class="avail in-stock">Magazyn Kraków · 8 szt.</span>
+          </div>
+        </div>
+
+        <div class="product" data-id="3" onclick="selectProduct(3)">
+          <div class="radio"></div>
+          <div class="info">
+            <div class="name">Valeo 347129</div>
+            <div class="code">Valeo 347129 · indeks AP 3340022</div>
+            <div class="meta"><span class="oem-pill">ZAMIENNIK 2</span> Część jakościowa · gwarancja 12 mies.</div>
+          </div>
+          <div class="price">
+            <div class="amount">320 zł</div>
+            <div class="label">netto · 1 szt.</div>
+          </div>
+          <div class="signals">
+            <span class="margin-pill yellow">Marża blisko progu</span>
+            <span class="avail delay">Magazyn centralny · 2 dni</span>
+          </div>
+        </div>
+
+        <div class="product" data-id="4" onclick="selectProduct(4)">
+          <div class="radio"></div>
+          <div class="info">
+            <div class="name">AutoXparts AX-FP-12</div>
+            <div class="code">AutoXparts AX-FP-12 · indeks AP 4501887</div>
+            <div class="meta"><span class="oem-pill" style="background:#FBE3E0;color:#C03A2C;">NIESPRAWDZONY</span> Brak danych jakościowych w katalogu</div>
+          </div>
+          <div class="price">
+            <div class="amount">180 zł</div>
+            <div class="label">netto · 1 szt.</div>
+          </div>
+          <div class="signals">
+            <span class="margin-pill red">Marża poniżej progu</span>
+            <span class="avail out">Brak na stanie · 5–7 dni</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="margin-legend">
+        <div class="items">
+          <span><span class="margin-pill green" style="padding:2px 6px;"></span><b>Zielony:</b> marża powyżej progu rentowności</span>
+          <span><span class="margin-pill yellow" style="padding:2px 6px;"></span><b>Żółty:</b> marża blisko progu</span>
+          <span><span class="margin-pill red" style="padding:2px 6px;"></span><b>Czerwony:</b> marża poniżej progu</span>
+        </div>
+        <div class="note">Wskaźnik informacyjny · decyzja cenowa po stronie handlowca</div>
+      </div>
+
+      <div class="summary" id="summary">
+        <div class="left">
+          <div class="label">Wybrana opcja do oferty</div>
+          <div class="selected-name" id="sel-name">Bosch 0 580 464 038</div>
+          <div class="selected-meta" id="sel-meta">420 zł netto · Magazyn Kraków · 8 szt. · marża powyżej progu</div>
+        </div>
+        <div class="right">
+          <button class="btn btn-primary btn-lg" onclick="goTo(4)">Przejdź do oferty →</button>
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:14px;">
+        <button class="btn btn-text" onclick="goTo(2)">← Wróć do analizy</button>
+        <button class="btn btn-secondary">+ Dodaj produkty do oferty (cross-sell)</button>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN 4: DRAFT ============ -->
+    <div class="screen" id="screen-4">
+      <div class="screen-head">
+        <h1>Przygotowana odpowiedź <span class="ai-badge">AI</span></h1>
+        <div class="sub">Pierwsza wersja oferty została wygenerowana automatycznie. Sprawdź treść, zatwierdź lub edytuj przed wysłaniem.</div>
+      </div>
+
+      <div class="draft-layout">
+
+        <div class="draft-card">
+          <div class="draft-head">
+            <div class="title">✉ Wiadomość zwrotna do klienta</div>
+            <div class="meta">Zapis automatyczny — 09:46</div>
+          </div>
+          <div class="draft-fields">
+            <div class="field"><span class="lbl">Do:</span><span class="val email">marek.wojcik@warsztat-wojcik.pl</span></div>
+            <div class="field"><span class="lbl">DW:</span><span class="val email">crm@autopartnermax.pl</span></div>
+            <div class="field"><span class="lbl">Temat:</span><span class="val">Re: Zapytanie — pompa paliwa Ford Focus · oferta AP-2026-08431</span></div>
+          </div>
+          <div class="draft-body">
+            <textarea id="draft-text">Dzień dobry Panie Marku,
+
+dziękuję za zapytanie. Pompa paliwa do Forda Focusa Mk3 z silnikiem 1.6 TDCi (rocznik 2015):
+
+REKOMENDOWANA OPCJA:
+• Bosch 0 580 464 038 — 420 zł netto / szt.
+• Zamiennik OEM, gwarancja producenta 24 miesiące
+• Dostępna od ręki, magazyn Kraków (8 szt.)
+• Dostawa: dziś popołudniu kurierem własnym
+
+OPCJE DODATKOWE (jeżeli będzie potrzeba):
+• Pompa Ford OEM oryginalna — 850 zł netto (oryginał, najwyższa jakość)
+• Valeo 347129 — 320 zł netto (zamiennik, dostawa 2 dni)
+
+Aby potwierdzić, że to właściwa część dla Państwa pojazdu, proszę o przesłanie VIN — dzięki temu mogę zweryfikować dokładny kod silnika i wyeliminować ryzyko błędnego doboru.
+
+Czekam na potwierdzenie zamówienia — w razie szybkiej decyzji do godz. 12:00 dostarczymy część dziś jeszcze przed 16:00.
+
+Pozdrawiam,
+Tomasz Kowalski
+Senior Handlowiec B2B · AutoPartner Max S.A.
++48 600 000 000 · tomasz.kowalski@autopartnermax.pl</textarea>
+          </div>
+        </div>
+
+        <div class="draft-side">
+          <div class="side-card">
+            <h4>Wybrany produkt</h4>
+            <div class="product-summary">
+              <div class="name">Bosch 0 580 464 038</div>
+              <div class="price">420 zł netto</div>
+              <div class="meta">Magazyn Kraków · 8 szt.</div>
+              <span class="margin-pill green">Marża powyżej progu</span>
+            </div>
+          </div>
+
+          <div class="side-card">
+            <h4>Sygnał marżowy</h4>
+            <div style="font-size:12px;color:var(--text);line-height:1.5;">
+              Wybrana opcja zapewnia marżę <b style="color:var(--green);">o 8 pp powyżej</b> progu rentowności kategorii. Możliwy rabat do <b>5%</b> bez zejścia poniżej progu.
+            </div>
+          </div>
+
+          <div class="crossell">
+            <div class="title">↗ Sugerowany cross-sell</div>
+            <div class="item">Klient nie wymienił <b>filtra paliwa</b> przy ostatnich 2 wizytach. Warto dorzucić sugestię: <b>Bosch F 026 402 067</b> · 65 zł netto.</div>
+          </div>
+
+          <div class="side-card">
+            <h4>Co zostanie zapisane</h4>
+            <div style="font-size:12px;color:var(--text);line-height:1.5;">
+              · Treść oferty<br>
+              · Wybrany produkt i alternatywy<br>
+              · Sygnał marżowy<br>
+              · Twoje korekty wobec rekomendacji AI<br>
+              <span style="color:var(--muted);">→ Dane wracają do poprawy katalogu i KPI pilota</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="actions">
+        <button class="btn btn-text" onclick="goTo(3)">← Wróć do produktów</button>
+        <div class="right">
+          <button class="btn btn-secondary">Zapisz draft</button>
+          <button class="btn btn-primary btn-lg" onclick="goTo(5)">Wyślij ofertę →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SCREEN 5: CONFIRMATION ============ -->
+    <div class="screen" id="screen-5">
+
+      <div class="confirm">
+        <div class="check">✓</div>
+        <h1>Oferta wysłana</h1>
+        <div class="desc">Wiadomość trafiła do klienta o 09:47 · Numer oferty AP-2026-08431 zapisany w CRM</div>
+      </div>
+
+      <div class="metrics">
+        <div class="metric">
+          <div class="label">Czas przygotowania</div>
+          <div class="value">4 min 23 s</div>
+          <div class="delta up">↓ 76% wobec mediany 18 min</div>
+        </div>
+        <div class="metric">
+          <div class="label">Korekty wobec AI</div>
+          <div class="value">2</div>
+          <div class="delta">drobne edycje treści maila</div>
+        </div>
+        <div class="metric">
+          <div class="label">Sygnał marżowy</div>
+          <div class="value green">Powyżej progu</div>
+          <div class="delta up">+8 pp wobec progu kategorii</div>
+        </div>
+        <div class="metric">
+          <div class="label">Cross-sell zasugerowany</div>
+          <div class="value">Tak</div>
+          <div class="delta">filtr paliwa Bosch · do potwierdzenia</div>
+        </div>
+      </div>
+
+      <div class="pilot-context">
+        <div class="left">
+          <div class="label">Kontekst pilota</div>
+          <div class="text">
+            Twoje aktywne użycie Asystenta w tym tygodniu: <b>17 z 22 zapytań (77%)</b>. Średni czas przygotowania oferty w grupie pilotażowej skrócił się o <b>32%</b> wobec okresu bazowego.
+          </div>
+        </div>
+        <div class="right">
+          <div class="stat"><div class="v">77%</div><div class="l">Adopcja</div></div>
+          <div class="stat"><div class="v">-32%</div><div class="l">Czas</div></div>
+          <div class="stat"><div class="v">94%</div><div class="l">Marża OK</div></div>
+        </div>
+      </div>
+
+      <div class="actions" style="margin-top:22px;">
+        <button class="btn btn-text" onclick="reset()">↻ Zacznij od nowa (zapytanie demo)</button>
+        <div class="right">
+          <button class="btn btn-secondary">Otwórz w CRM</button>
+          <button class="btn btn-primary">Następne zapytanie</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- AI thinking overlay -->
+<div class="thinking" id="thinking">
+  <div class="thinking-box">
+    <div class="thinking-dots"><span></span><span></span><span></span></div>
+    <div class="thinking-text">
+      <div id="thinking-msg">Asystent analizuje zapytanie</div>
+      <div class="sub">Wyodrębniam dane · sprawdzam katalog walidowany · liczę wskaźnik marży</div>
+    </div>
+  </div>
+</div>
+
+<div class="footnote">
+  Prototyp pilota Asystenta Ofertowania B2B · <b>AutoPartner Max S.A.</b> · Rekomendacja kierunku wdrożenia AI · Aneta Nowicka · 24.05.2026
+</div>
+
+<script>
+  const products = {
+    1: { name: "Pompa paliwa Ford OEM oryginalna", price: "850 zł", margin: "green", meta: "850 zł netto · Magazyn Kraków · 4 szt. · marża powyżej progu" },
+    2: { name: "Bosch 0 580 464 038", price: "420 zł", margin: "green", meta: "420 zł netto · Magazyn Kraków · 8 szt. · marża powyżej progu" },
+    3: { name: "Valeo 347129", price: "320 zł", margin: "yellow", meta: "320 zł netto · Magazyn centralny · 2 dni · marża blisko progu" },
+    4: { name: "AutoXparts AX-FP-12", price: "180 zł", margin: "red", meta: "180 zł netto · brak na stanie 5–7 dni · marża poniżej progu" }
+  };
+
+  function goTo(n) {
+    // Show thinking overlay when transitioning between AI-heavy steps
+    if (n === 2 || n === 3) {
+      showThinking(n === 2 ? "Asystent analizuje zapytanie" : "Asystent dobiera produkty z walidowanego katalogu");
+      setTimeout(() => { actuallyGoTo(n); hideThinking(); }, 1100);
+    } else {
+      actuallyGoTo(n);
+    }
+  }
+
+  function actuallyGoTo(n) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-' + n).classList.add('active');
+    updateStepper(n);
+    window.scrollTo({top: 0, behavior: 'instant'});
+  }
+
+  function updateStepper(n) {
+    document.querySelectorAll('.step').forEach(s => {
+      const step = parseInt(s.dataset.step);
+      s.classList.remove('active', 'done');
+      if (step < n) s.classList.add('done');
+      if (step === n) s.classList.add('active');
+    });
+  }
+
+  function selectProduct(id) {
+    document.querySelectorAll('.product').forEach(p => p.classList.remove('selected'));
+    document.querySelector('.product[data-id="' + id + '"]').classList.add('selected');
+    const p = products[id];
+    document.getElementById('sel-name').textContent = p.name;
+    document.getElementById('sel-meta').textContent = p.meta;
+    // Update margin pill color in summary (visual feedback)
+    const summary = document.getElementById('summary');
+    summary.style.borderColor = p.margin === 'red' ? '#F4B5AE' : p.margin === 'yellow' ? '#E8D391' : '#C5D0E0';
+  }
+
+  function showThinking(msg) {
+    document.getElementById('thinking-msg').textContent = msg;
+    document.getElementById('thinking').classList.add('show');
+  }
+  function hideThinking() {
+    document.getElementById('thinking').classList.remove('show');
+  }
+
+  function reset() {
+    actuallyGoTo(1);
+    selectProduct(2);  // Bosch is default recommended
+  }
+</script>
+
+</body>
+</html>
